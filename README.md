@@ -1,28 +1,91 @@
-# Voice-Prescription
-Built a GUI application using Tkinter that helps Doctors to prepare prescriptions more efficiently. This uses speech to text conversion and text extraction to prepare prescriptions in the correct format. This project is submitted for Smart India Hackathon 2020. 
+import streamlit as st
+import speech_recognition as sr
+import re
+from email.message import EmailMessage
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
-With the increasing number of patients, it is very difficult for the doctors to write prescriptions manually and have an account of all the patients. The proposed system will provide a platform for the doctors to dictate their prescription orally instead of typing or writing it manually which saves a lot of time for doctors as well as the patients and avoids human errors to a greater extent .The proposed system converts the voice to text first and then generate prescriptions automatically by extracting the keywords and provides the prescription in the desired format automatically. This system can also generate prescriptions efficiently with just the audio fileof the conversation between the doctor and the patient through a phone call. The patient need not visit the doctor manually for curing very small health issues. It also provides a way to send the prescription through mail personally to the patient so that they need not meet the doctor again for prescription. This system also provides an option for the doctor to sign the prescription after reviewing it. Since the prescription provided is verified by the doctor there is no possibility of mistakes in this system and the security of the patients medical records is maintained.
+# Function to convert audio to text
+def convert_audio_to_text(audio_file):
+    recognizer = sr.Recognizer()
+    with sr.AudioFile(audio_file) as source:
+        audio_data = recognizer.record(source)
+        text = recognizer.recognize_google(audio_data)
+    return text
 
-## Steps:
-  1.Import voice or audio file<br>
-  2.Converts audio to text<br>
-  3.Extracts keywords and prepares prescription in correct format<br>
-  4.Displays it for verification and correction if any<br>
-  5.Send prescription to patient E-mail in read-only format.<br>
- 
-## Software Requirements:
-  1.[Python 3](https://www.python.org/ftp/python/3.8.1/python-3.8.1.exe)<br>
-  2.Ms Word<br>
- 
- ## Dependencies:  
-  1.python docx - `pip install python-docx`<br>
-  2.Speech Recognition - `pip install SpeechRecognition`<br>
-  3.PyAudio - `pip install PyAudio`<br>
-  4.Model - `pip install https://med7.s3.eu-west-2.amazonaws.com/en_core_med7_lg.tar.gz`  
-  5.Nltk - `pip install nltk`  
-  6.Spacy - `pip install spacy==2.3.5`  
-  7.NameParser - `pip install nameparser`
-  
- 
- 
+# Function to extract keywords and prepare prescription
+def prepare_prescription(text):
+    # Extract keywords (e.g., medicine names and timings) using regex or NLP techniques
+    # For example:
+    medicine_names = re.findall(r'Medicine: (\w+)', text)
+    timings = re.findall(r'Timings: (\d+)', text)
+    
+    # Prepare prescription format
+    prescription = "Prescription:\n"
+    for name, timing in zip(medicine_names, timings):
+        prescription += f"- {name}: {timing} times a day\n"
 
+    return prescription
+    
+
+    
+
+# Function to send prescription to patient's email
+def send_prescription_to_email(prescription, receiver_email):
+    # Update with your Gmail SMTP credentials and application-specific password
+    sender_email = "bodemvinay@gmail.com"  
+    sender_password = "brjw udhq sced uwbf"  # Update with your application-specific password
+
+    msg =MIMEMultipart()
+    msg["Subject"] = "Your Prescription"
+    msg["From"] = sender_email  # Update with your Gmail address
+    msg["To"] = receiver_email
+    body = message
+    msg.attach(MIMEText(body, 'plain'))ss
+    msg.set_content(prescription)
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(sender_email, sender_password)
+        server.send_message(msg)
+
+    # Indicate success
+    st.success("Prescription sent successfully!")
+
+# Streamlit app
+def main():
+    st.title("Voice Prescription App")
+
+    # File uploader for audio file
+    audio_file = st.file_uploader("Upload Audio File", type=["mp3", "wav"])
+
+    if audio_file:
+        st.audio(audio_file, format="audio/wav")
+
+        # Convert audio to text
+        text = convert_audio_to_text(audio_file)
+
+        # Display converted text
+        st.subheader("Converted Text:")
+        st.write(text)
+
+        # Extract keywords and prepare prescription
+        prescription = prepare_prescription(text)
+
+        # Display prescription for verification and correction
+        st.subheader("Prescription:")
+        st.write(prescription)
+
+        # Input for patient's email
+        receiver_email = st.text_input("Enter Patient's Email")
+
+        # Button to send prescription
+        if st.button("Send Prescription"):
+            if receiver_email:
+                send_prescription_to_email(prescription, receiver_email)
+                st.success("Prescription sent successfully!")
+            else:
+                st.error("Please enter the patient's email.")
+
+if _name_ == "_main_":
+    main()
